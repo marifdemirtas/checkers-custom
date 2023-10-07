@@ -1,4 +1,7 @@
-
+let selectedPiece = null;
+let currentPlayer = 'white'; // Player 1 starts
+let yourPlayer = 'BEYAZ';
+let skipRequired = false;
 document.addEventListener("DOMContentLoaded", () => {
     const socket = io.connect(location.origin);
 
@@ -7,9 +10,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     const board = document.querySelector('.board');
-    let selectedPiece = null;
-    let currentPlayer = 'white'; // Player 1 starts
-    let skipRequired = false;
+
 
     const statusElement = document.querySelector('.status');
 
@@ -17,6 +18,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const closeModal = document.getElementById("closeModal");
     const winMessage = document.getElementById("winMessage");
     const resetFromModal = document.getElementById("resetFromModal");
+
+    function playPlaceSound() {
+        let soundEffect = document.getElementById('placeSound');
+        soundEffect.play();
+    }
     
     function showWinModal(winner) {
         winMessage.innerHTML = `${winner} kazandı!`;
@@ -77,7 +83,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function updateTurnDisplay() {
-        const playerColorElement = document.getElementById('player-color');
         const currentTurnElement = document.getElementById('current-turn');
         checkWinCondition();
         
@@ -86,8 +91,6 @@ document.addEventListener("DOMContentLoaded", () => {
         } else {
             currentTurnElement.textContent = "BEYAZ";
         }
-    
-        // You can set the player color once when the game starts or whenever it's changed
     }
     
     // Function to determine if the movement is valid
@@ -208,7 +211,7 @@ document.addEventListener("DOMContentLoaded", () => {
     for (let i = 0; i < 8; i++) {
         for (let j = 0; j < 8; j++) {
             const square = document.createElement('div');
-            square.classList.add('square');
+            square.classList.add('square', ((i-j)%2==0) ? 'dark-square' : 'light-square');
             square.dataset.position = `${i}-${j}`;
             board.appendChild(square);
 
@@ -257,6 +260,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     board.addEventListener('click', (e) => {
+        if (currentPlayer != (yourPlayer == 'BEYAZ' ? 'white' : 'black')){
+            return;
+        }
+
         const target = e.target;
         clearHighlights(); // Clear previous highlights
     
@@ -279,6 +286,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 selectedPiece.classList.remove('selected');
                 selectedPiece = null;
                 currentPlayer = (currentPlayer === 'white') ? 'black' : 'white'; // Switch player
+                playPlaceSound();
                 updateTurnDisplay(); // Call this function to update the turn display
                 syncServer();
                 return;
@@ -310,6 +318,7 @@ document.addEventListener("DOMContentLoaded", () => {
             currentPlayer = (currentPlayer === 'white') ? 'black' : 'white'; // Switch player
             updateTurnDisplay(); // Call this function to update the turn display
             selectedPiece = null;
+            playPlaceSound();
             syncServer();
             return;
         }
@@ -317,19 +326,21 @@ document.addEventListener("DOMContentLoaded", () => {
     });
     
     socket.on('update_board', function(data) {
-        document.getElementById('board').innerHTML = data['board'];
-
+        console.log(data);
+        document.getElementsByClassName('board')[0].innerHTML = data['board'];
         // Toggle the current player after the board is updated
         currentPlayer = data['player'];
         updateTurnDisplay();
     });
     socket.on('assign_color', function(data) {
-        playerColorElement.textContent = data;
+        console.log("assigned color", data);
+        document.getElementById('player-color').textContent = data;
+        yourPlayer = data;
     });
 
     function syncServer() {
         // Get the current state of the board
-        const boardHTML = document.getElementById('board').innerHTML;
+        const boardHTML = document.getElementsByClassName('board')[0].innerHTML;
 
         // Emit this state to the server
         socket.emit('sync_board', {'board': boardHTML, 'player': currentPlayer});

@@ -29,7 +29,11 @@ body {
     display: grid;
     grid-template-columns: repeat(8, 1fr);
     grid-template-rows: repeat(8, 1fr);
-    border: 1px solid #a6a6a6; /* Add a border similar to the image */
+    /* border: 1px solid #a6a6a6; Add a border similar to the image */
+    background-color: #D4B483; /* Light wooden color for the board's background */
+    border: 1em solid #8A5D38; /* Darker wooden color for the border */
+    box-sizing: border-box; /* To make sure the border doesn't increase the board's size */
+    position: relative; /* To position the labels inside the board */
 }
 /* The Modal (background) */
 .modal {
@@ -70,11 +74,23 @@ body {
     cursor: pointer;
 }
 
+
+.dark-square {
+    background-color: #B57340; /* Darker square color */
+}
+
+.light-square {
+    background-color: #F2D4B6; /* Lighter square color */
+}
 .square {
     width: 100%;
     height: 100%;
-    background-color: #ffe6b3; /* Light color for the square similar to the image */
+    /* background-color: #ffe6b3; Light color for the square similar to the image */
     border: 1px solid #a6a6a6; /* Add a border to each square to match the pattern in the image */
+}
+
+.square:hover {
+    background-color: rgba(120,120,120,0.01); /* Light color for the square similar to the image */
 }
 
 .piece {
