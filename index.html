@@ -6,10 +6,25 @@
     <title>Online Checkers</title>
     <link rel="stylesheet" href="static/css/style.css">
     <script src="static/js/game.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
 </head>
 <body>
+    <div class="info-panel">
+        <span class="player-info">Rengin: <span id="player-color">SİYAH</span></span>
+        <span class="turn-info">Şu an <span id="current-turn">SİYAH</span>'ın sırası.</span>
+    </div>
+
     <div class="board">
         <!-- 64 squares and checkers pieces will be dynamically added using JavaScript -->
     </div>
+
+    <div id="winModal" class="modal">
+        <div class="modal-content">
+          <span id="closeModal" class="close">&times;</span>
+          <p id="winMessage"></p>
+          <button id="resetFromModal">Sıfırla</button>
+        </div>
+      </div>
+      
 </body>
 </html>

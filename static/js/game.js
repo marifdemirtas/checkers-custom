@@ -1,15 +1,118 @@
+
 document.addEventListener("DOMContentLoaded", () => {
+    const socket = io.connect(location.origin);
+
+    socket.on('connect', function() {
+        console.log('Connected to server');
+    });
+
     const board = document.querySelector('.board');
     let selectedPiece = null;
     let currentPlayer = 'white'; // Player 1 starts
+    let skipRequired = false;
 
+    const statusElement = document.querySelector('.status');
+
+    const winModal = document.getElementById("winModal");
+    const closeModal = document.getElementById("closeModal");
+    const winMessage = document.getElementById("winMessage");
+    const resetFromModal = document.getElementById("resetFromModal");
+    
+    function showWinModal(winner) {
+        winMessage.innerHTML = `${winner} kazandı!`;
+        winModal.style.display = "block";
+    }
+    
+    // When the user clicks on <span> (x), close the modal
+    closeModal.onclick = function() {
+        winModal.style.display = "none";
+    }
+    
+    // When the user clicks anywhere outside of the modal, close it
+    window.onclick = function(event) {
+        if (event.target === winModal) {
+            winModal.style.display = "none";
+        }
+    }
+    
+    // Reset the game when "Reset" button in modal is clicked
+    resetFromModal.onclick = function() {
+        resetGame();
+        winModal.style.display = "none";
+    }
+
+    function resetGame() {
+        // Remove all pieces from the board
+        const allPieces = document.querySelectorAll('.piece, .dot, .ghost-piece');
+        allPieces.forEach(piece => piece.remove());
+    
+        // Add the initial black pieces (top-left 3x3)
+        for (let i = 0; i < 3; i++) {
+            for (let j = 0; j < 3; j++) {
+                const square = document.querySelector(`[data-position="${i}-${j}"]`);
+                const piece = document.createElement('div');
+                piece.classList.add('piece', 'black-piece');
+                square.appendChild(piece);
+            }
+        }
+    
+        // Add the initial white pieces (bottom-right 3x3)
+        for (let i = 5; i < 8; i++) {
+            for (let j = 5; j < 8; j++) {
+                const square = document.querySelector(`[data-position="${i}-${j}"]`);
+                const piece = document.createElement('div');
+                piece.classList.add('piece', 'white-piece');
+                square.appendChild(piece);
+            }
+        }
+    
+        // Reset game state variables
+        currentPlayer = 'white';
+        selectedPiece = null;
+        skipRequired = false;
+        clearHighlights();
+    
+        // Update the display for the turn
+        updateTurnDisplay();
+    }
+
+    function updateTurnDisplay() {
+        const playerColorElement = document.getElementById('player-color');
+        const currentTurnElement = document.getElementById('current-turn');
+        checkWinCondition();
+        
+        if (currentPlayer === 'black') {
+            currentTurnElement.textContent = "SİYAH";
+        } else {
+            currentTurnElement.textContent = "BEYAZ";
+        }
+    
+        // You can set the player color once when the game starts or whenever it's changed
+    }
+    
     // Function to determine if the movement is valid
 
     function getSquareCoordinates(square) {
         return square.dataset.position.split('-').map(Number);
     }
 
-    function isValidMove(oldSquare, newSquare) {
+    function isValidSimpleMove(oldSquare, newSquare) {
+        const [oldX, oldY] = getSquareCoordinates(oldSquare);
+        const [newX, newY] = getSquareCoordinates(newSquare);
+        const dx = newX - oldX;
+        const dy = newY - oldY;
+    
+        if ((Math.abs(dx) === 0 && Math.abs(dy) === 1) || (Math.abs(dx) === 1 && Math.abs(dy) === 0)) {
+            // Ensure pieces move away from their corner
+            if ((selectedPiece.dataset.player === 'black' && (dx === 1 || dy === 1)) ||
+                (selectedPiece.dataset.player === 'white' && (dx === -1 || dy === -1))) {
+                return !newSquare.firstChild; // Ensure the new square is empty
+            }
+        }
+        return false;
+    }
+    
+    function isValidSkip(oldSquare, newSquare) {
         const [oldX, oldY] = getSquareCoordinates(oldSquare);
         const [newX, newY] = getSquareCoordinates(newSquare);
         const dx = newX - oldX;
@@ -17,33 +120,53 @@ document.addEventListener("DOMContentLoaded", () => {
         const midX = (oldX + newX) / 2;
         const midY = (oldY + newY) / 2;
         const midSquare = document.querySelector(`[data-position="${midX}-${midY}"]`);
-        
-        // Rule for adjacent moves
-        if ((Math.abs(dx) === 1 && Math.abs(dy) === 0) || (Math.abs(dx) === 0 && Math.abs(dy) === 1)) {
-            // Ensure pieces move away from their corner
-            if ((selectedPiece.dataset.player === 'black' && (dx === 1 || dy === 1)) ||
-                (selectedPiece.dataset.player === 'white' && (dx === -1 || dy === -1))) {
-                return !newSquare.firstChild; // Ensure the new square is empty
-            }
-        }
-
-        // Rule for skipping
-        if ((Math.abs(dx) === 2 && Math.abs(dy) === 0) || (Math.abs(dx) === 0 && Math.abs(dy) === 2)) {
+    
+        // Check for valid skip conditions
+        if ((Math.abs(dx) === 0 && Math.abs(dy) === 2) || (Math.abs(dx) === 2 && Math.abs(dy) === 0)) {
             // Ensure pieces move away from their corner
             if ((selectedPiece.dataset.player === 'black' && (dx === 2 || dy === 2)) ||
                 (selectedPiece.dataset.player === 'white' && (dx === -2 || dy === -2))) {
                 return midSquare.firstChild && !newSquare.firstChild; // Ensure there's a piece to skip over and the destination is empty
             }
         }
-
         return false;
     }
+    
+    function isValidMove(oldSquare, newSquare) {
+        return isValidSimpleMove(oldSquare, newSquare) || isValidSkip(oldSquare, newSquare);
+    }
+    
 
-    let skipRequired = false;
+    function handleSkip(startSquare, targetSquare) {
+        // Create a 'ghost' piece at the original position
+        const ghostPiece = document.createElement('div');
+        ghostPiece.classList.add('piece', selectedPiece.dataset.player + '-piece', 'ghost-piece'); // Using a hypothetical 'ghost-piece' CSS class
+        startSquare.appendChild(ghostPiece);
+    
+        // Create a 'dot' at the target position
+        const dot = document.createElement('div');
+        dot.dataset.player = currentPlayer;
+        dot.classList.add('dot'); // Using a hypothetical 'dot' CSS class
+        targetSquare.appendChild(dot);
+    
+        // Remove the original piece (it's now represented by the ghost piece)
+        selectedPiece.remove();
+   
+        // Check if further skips are possible from the new position
+        if (!canSkipFromSquare(targetSquare)) {
+            // If no further skips, convert dot into regular piece
+            dot.classList.remove('dot');
+            dot.classList.add('piece', selectedPiece.dataset.player + '-piece');
+            document.querySelectorAll('.ghost-piece').forEach(ghost => ghost.remove());
+        } else {
+            selectedPiece = dot; // The dot becomes the new "selectedPiece"
+        }
+    }
+    
 
     function canSkipFromSquare(square) {
         const [x, y] = getSquareCoordinates(square);
-        const possibleDirections = selectedPiece.dataset.player === 'black' ? [[2, 2], [2, -2]] : [[-2, -2], [-2, 2]];
+        const possibleDirections = selectedPiece.dataset.player === 'black' ? [[0, 2], [2, 0]] : [[0, -2], [-2, 0]];
     
         for (let [dx, dy] of possibleDirections) {
             const newX = x + dx;
@@ -63,9 +186,8 @@ document.addEventListener("DOMContentLoaded", () => {
     
     function highlightValidMoves(square) {
         const [x, y] = getSquareCoordinates(square);
-        const possibleDirections = selectedPiece.dataset.player === 'black' ? [[0, 1], [1, 0], [2, 0], [0, 2]] : [[0, -1], [-1, 0], [-2, 0], [2, 0]];
+        const possibleDirections = selectedPiece.dataset.player === 'black' ? [[0, 1], [1, 0], [2, 0], [0, 2]] : [[0, -1], [-1, 0], [-2, 0], [0, -2]];
     
-        console.log(possibleDirections);
         for (let [dx, dy] of possibleDirections) {
             const newX = x + dx;
             const newY = y + dy;
@@ -73,7 +195,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
             if (targetSquare && isValidMove(square, targetSquare)) {
                 targetSquare.classList.add('highlight');
-                console.log(targetSquare);
             }
         }
     }
@@ -82,7 +203,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const highlightedSquares = document.querySelectorAll('.highlight');
         highlightedSquares.forEach(square => square.classList.remove('highlight'));
     }
-    
 
     // Create board squares and pieces
     for (let i = 0; i < 8; i++) {
@@ -107,54 +227,112 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+
+
+
+    function checkWinCondition() {
+        const blackWinCondition = Array.from(document.querySelectorAll('.square'))
+                                      .filter(square => {
+                                        const [x, y] = getSquareCoordinates(square);
+                                        return x > 4 && y > 4;
+                                      })
+                                      .every(square => square.firstChild && square.firstChild.classList.contains('black-piece'));
+    
+        const whiteWinCondition = Array.from(document.querySelectorAll('.square'))
+                                      .filter(square => {
+                                        const [x, y] = getSquareCoordinates(square);
+                                        return x < 3 && y < 3;
+                                      })
+                                      .every(square => square.firstChild && square.firstChild.classList.contains('white-piece'));
+    
+        if (blackWinCondition) {
+            showWinModal("Siyah");
+        }
+    
+        if (whiteWinCondition) {
+            showWinModal("Beyaz");
+        }
+    
+    }
+
+
     board.addEventListener('click', (e) => {
         const target = e.target;
         clearHighlights(); // Clear previous highlights
-
-        // Select a piece
-        if (target.classList.contains('piece') && target.dataset.player === currentPlayer) {
+    
+        // If player clicks on a piece
+        if (target.classList.contains('piece') && target.dataset.player === currentPlayer && !skipRequired) {
+            if (selectedPiece) {
+                selectedPiece.classList.remove('selected'); // Deselect previously selected piece
+            }
             selectedPiece = target;
             selectedPiece.classList.add('selected');
             highlightValidMoves(selectedPiece.parentElement); // Highlight possible moves
+            syncServer();
             return;
         }
     
-
-        // Move to a new square
-        if (target.classList.contains('square') && selectedPiece) {
-            if (isValidMove(selectedPiece.parentElement, target)) {
-                const [oldX, oldY] = getSquareCoordinates(selectedPiece.parentElement);
-                const [newX, newY] = getSquareCoordinates(target);
-
+        if (target.dataset.position){
+            // Handle simple move
+            if (selectedPiece && isValidSimpleMove(selectedPiece.parentElement, target)) {
                 target.appendChild(selectedPiece);
                 selectedPiece.classList.remove('selected');
-
-                // Check if it was a skip
-                if (Math.abs(newX - oldX) === 2 && Math.abs(newY - oldY) === 2) {
-                    // It was a skip, check if further skips are possible
-                    if (canSkipFromSquare(target)) {
-                        selectedPiece = target.firstChild;
-                        selectedPiece.classList.add('selected');
-                        skipRequired = true;
-                        return; // retain the turn
-                    } else {
-                        skipRequired = false; // reset skip requirement
-                    }
-                } else {
-                    if (skipRequired) {
-                        // If a skip was required but a regular move was attempted, disallow the move
-                        selectedPiece.parentElement.appendChild(selectedPiece);
-                        selectedPiece.classList.remove('selected');
-                        selectedPiece = null;
-                        return;
-                    }
-                }
-    
-                // Switch player
-                currentPlayer = (currentPlayer === 'white') ? 'black' : 'white'; 
                 selectedPiece = null;
+                currentPlayer = (currentPlayer === 'white') ? 'black' : 'white'; // Switch player
+                updateTurnDisplay(); // Call this function to update the turn display
+                syncServer();
+                return;
+            }
+
+            // Handle skips
+            if (selectedPiece && isValidSkip(selectedPiece.parentElement, target)) {
+                handleSkip(selectedPiece.parentElement, target);
+                if (canSkipFromSquare(target)) {
+                    selectedPiece = target.firstChild; // The dot becomes the new "selectedPiece"
+                } else {
+                    selectedPiece = null;
+                    currentPlayer = (currentPlayer === 'white') ? 'black' : 'white'; // Switch player
+                    updateTurnDisplay(); // Call this function to update the turn display
+                }
+                syncServer();
+                return;
             }
         }
-
+    
+        // Handle case where player clicks on the dot (to confirm end of skips)
+        if (target === selectedPiece && target.classList.contains('dot')) {
+            // Convert dot to regular piece and remove ghost pieces
+            target.classList.remove('dot');
+            target.classList.add('piece');
+            target.classList.add((currentPlayer === 'white') ? 'white-piece' : 'black-piece');
+            target.dataset.player = currentPlayer;
+            document.querySelectorAll('.ghost-piece').forEach(ghost => ghost.remove());
+            currentPlayer = (currentPlayer === 'white') ? 'black' : 'white'; // Switch player
+            updateTurnDisplay(); // Call this function to update the turn display
+            selectedPiece = null;
+            syncServer();
+            return;
+        }
+       
     });
+    
+    socket.on('update_board', function(data) {
+        document.getElementById('board').innerHTML = data['board'];
+
+        // Toggle the current player after the board is updated
+        currentPlayer = data['player'];
+        updateTurnDisplay();
+    });
+    socket.on('assign_color', function(data) {
+        playerColorElement.textContent = data;
+    });
+
+    function syncServer() {
+        // Get the current state of the board
+        const boardHTML = document.getElementById('board').innerHTML;
+
+        // Emit this state to the server
+        socket.emit('sync_board', {'board': boardHTML, 'player': currentPlayer});
+    }
+
 });

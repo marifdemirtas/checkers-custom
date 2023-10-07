@@ -1,9 +1,26 @@
 body {
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
     height: 100vh;
     background-color: #f4f4f4;
+}
+
+.info-panel {
+    display: flex;
+    flex-direction: column; /* This makes the child elements stack vertically */
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 10px 50px; /* Adjust as needed for spacing */
+    background-color: #e6e6e6; /* Light gray background */
+    border-radius: 10px;
+}
+
+.player-info, .turn-info {
+    font-size: 1.5em;
+    margin: 5px 0; /* Provides some spacing between the two messages */
 }
 
 .board {
@@ -13,6 +30,44 @@ body {
     grid-template-columns: repeat(8, 1fr);
     grid-template-rows: repeat(8, 1fr);
     border: 1px solid #a6a6a6; /* Add a border similar to the image */
+}
+/* The Modal (background) */
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Sit on top */
+    padding-top: 100px; /* Location of the box */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+}
+
+/* Modal Content */
+.modal-content {
+    background-color: #fefefe;
+    margin: auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 50%;
+    text-align: center;
+}
+
+/* The Close Button */
+.close {
+    color: #aaaaaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+    color: #000;
+    text-decoration: none;
+    cursor: pointer;
 }
 
 .square {
@@ -39,4 +94,19 @@ body {
 
 .highlight {
     background-color: lightgreen;
+}
+
+.ghost-piece {
+    opacity: 0.5;
+}
+
+.dot {
+    width: 50%;
+    height: 50%;
+    border-radius: 50%;
+    background-color: red;
+    position: relative;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
 }
