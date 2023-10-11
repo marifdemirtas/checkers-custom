@@ -1,19 +1,20 @@
 let selectedPiece = null;
 let currentPlayer = 'white'; // Player 1 starts
-let yourPlayer = 'BEYAZ';
+let yourPlayer = 'TBD';
 let skipRequired = false;
 document.addEventListener("DOMContentLoaded", () => {
+    function gameId() {
+        return window.location.href.split('/').pop();
+    }
     const socket = io.connect(location.origin);
 
     socket.on('connect', function() {
         console.log('Connected to server');
+        socket.emit('join_game', {game_id: gameId()});
     });
 
     const board = document.querySelector('.board');
-
-
     const statusElement = document.querySelector('.status');
-
     const winModal = document.getElementById("winModal");
     const closeModal = document.getElementById("closeModal");
     const winMessage = document.getElementById("winMessage");
@@ -82,6 +83,17 @@ document.addEventListener("DOMContentLoaded", () => {
         updateTurnDisplay();
     }
 
+    function updatePlayerDisplay(data) {
+        const currentTurnElement = document.getElementById('player-color');
+
+        if (data === 'black') {
+            currentTurnElement.textContent = "SİYAH";
+        } else if (data === 'white') {
+            currentTurnElement.textContent = "BEYAZ";
+        } else {
+            currentTurnElement.textContent = "İZLEYİCİ";
+        }
+    }
     function updateTurnDisplay() {
         const currentTurnElement = document.getElementById('current-turn');
         checkWinCondition();
@@ -207,6 +219,22 @@ document.addEventListener("DOMContentLoaded", () => {
         highlightedSquares.forEach(square => square.classList.remove('highlight'));
     }
 
+    // Calculate tile size based on the board's height
+    var tileSize = board.clientHeight / 8;
+    
+    // Set the line-height for rank numbers
+    var rankNumbers = document.querySelectorAll('.rankNumber');
+    rankNumbers.forEach(function(rankNumber) {
+        rankNumber.style.lineHeight = tileSize + 'px';
+    });
+    
+    // Set the width for file letters based on the board's width
+    var fileLetters = document.querySelectorAll('#file > .fileLetter');
+    fileLetters.forEach(function(fileLetter) {
+        fileLetter.style.width = board.clientWidth / 8 + 'px';
+    });
+    
+
     // Create board squares and pieces
     for (let i = 0; i < 8; i++) {
         for (let j = 0; j < 8; j++) {
@@ -260,7 +288,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     board.addEventListener('click', (e) => {
-        if (currentPlayer != (yourPlayer == 'BEYAZ' ? 'white' : 'black')){
+        if (currentPlayer != yourPlayer){
             return;
         }
 
@@ -302,6 +330,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     currentPlayer = (currentPlayer === 'white') ? 'black' : 'white'; // Switch player
                     updateTurnDisplay(); // Call this function to update the turn display
                 }
+                playPlaceSound();
                 syncServer();
                 return;
             }
@@ -334,16 +363,20 @@ document.addEventListener("DOMContentLoaded", () => {
     });
     socket.on('assign_color', function(data) {
         console.log("assigned color", data);
-        document.getElementById('player-color').textContent = data;
+        updatePlayerDisplay(data);
         yourPlayer = data;
+    });
+    socket.on('game_terminated', function(data) {
+        alert(data);
     });
 
     function syncServer() {
+        console.log("Syncing board");
         // Get the current state of the board
         const boardHTML = document.getElementsByClassName('board')[0].innerHTML;
 
         // Emit this state to the server
-        socket.emit('sync_board', {'board': boardHTML, 'player': currentPlayer});
+        socket.emit('sync_board', {'board': boardHTML, 'player': currentPlayer, 'game_id': gameId()});
     }
 
 });

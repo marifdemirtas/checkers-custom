@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Online Checkers</title>
+    <link rel="stylesheet" href="static/css/style.css">
+    <script src="static/js/game.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+</head>
+<body>
+    <div class="info-panel">
+        <span class="player-info">Rengin: <span id="player-color">BEYAZ</span></span>
+        <span class="turn-info">Şu an <span id="current-turn">BEYAZ</span>'ın sırası.</span>
+    </div>
+     
+    <div class="board-border">
+
+        <div class="labels top">
+            <div class="rankNumber">8</div>
+            <div class="rankNumber">7</div>
+            <div class="rankNumber">6</div>
+            <div class="rankNumber">5</div>
+            <div class="rankNumber">4</div>
+            <div class="rankNumber">3</div>
+            <div class="rankNumber">2</div>
+            <div class="rankNumber">1</div>
+         </div>
+         
+        <div class="main-content">
+            <div class="labels left">
+                <span class="fileLetter">A
+                </span><span class="fileLetter">B
+                </span><span class="fileLetter">C
+                </span><span class="fileLetter">D
+                </span><span class="fileLetter">E
+                </span><span class="fileLetter">F
+                </span><span class="fileLetter">G
+                </span><span class="fileLetter">H
+                </span>
+             </div>
+
+            <div class="board">
+                <!-- 64 squares and checkers pieces will be dynamically added using JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <div id="winModal" class="modal">
+        <div class="modal-content">
+          <span id="closeModal" class="close">&times;</span>
+          <p id="winMessage"></p>
+          <button id="resetFromModal">Sıfırla</button>
+        </div>
+    </div>
+    <audio id="placeSound" preload="auto">
+        <source src="static/images/capture.mp3" type="audio/mp3">
+    </audio>
+      
+</body>
+</html>

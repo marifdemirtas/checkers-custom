@@ -23,18 +23,6 @@ body {
     margin: 5px 0; /* Provides some spacing between the two messages */
 }
 
-.board {
-    width: 300px;
-    height: 300px;
-    display: grid;
-    grid-template-columns: repeat(8, 1fr);
-    grid-template-rows: repeat(8, 1fr);
-    /* border: 1px solid #a6a6a6; Add a border similar to the image */
-    background-color: #D4B483; /* Light wooden color for the board's background */
-    border: 1em solid #8A5D38; /* Darker wooden color for the border */
-    box-sizing: border-box; /* To make sure the border doesn't increase the board's size */
-    position: relative; /* To position the labels inside the board */
-}
 /* The Modal (background) */
 .modal {
     display: none; /* Hidden by default */
@@ -125,4 +113,64 @@ body {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
+}
+
+.board-border {
+    display: flex;
+    flex-direction: column;
+    background: #8A5D38;
+    position: relative;
+    width: 320px; /* Example width; you can adjust as needed */
+}
+
+.labels {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color:#D4B483;
+    font-weight: bold;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.labels span {
+    flex: 1;
+    text-align: center;
+    user-select: none; /* Optional: prevent the user from selecting the labels */
+}
+
+.top {
+    padding: 0 2em 0 2em; /* Adjust padding to fit inside the border */
+    height: 20px; /* Example height for the top labels */
+}
+
+.main-content {
+    display: flex;
+}
+
+.left {
+    flex-direction: column;
+    padding: 0.5em 0 0.5em 0; /* Adjust padding to fit inside the border */
+    width: 1em; /* Example width for the left labels */
+}
+
+.board {
+    flex: 1;
+    background-color: #aa1414; /* Background color for demonstration */
+    display: flex; /* Use flex to evenly distribute items like in a chessboard */
+    flex-wrap: wrap;
+}
+
+.board {
+    width: 300px;
+    height: 300px;
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    grid-template-rows: repeat(8, 1fr);
+    /* border: 1px solid #a6a6a6; Add a border similar to the image */
+    background-color: #D4B483; /* Light wooden color for the board's background */
+    border: 1em solid #8A5D38; /* Darker wooden color for the border */
+    border-top: none;
+    border-left: none;
+    box-sizing: border-box; /* To make sure the border doesn't increase the board's size */
+    position: relative; /* To position the labels inside the board */
 }

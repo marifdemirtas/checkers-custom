@@ -1,19 +1,13 @@
-runtime: python39 # Specify the Python version
-instance_class: F2 # Choose the instance class, F2 is a common choice for lightweight applications.
-automatic_scaling: 
-  target_cpu_utilization: 0.65 # This scales the instances based on CPU utilization.
+runtime: python39  # specify the python version
+instance_class: F2  # choose an instance class based on your needs
+automatic_scaling:
+  target_cpu_utilization: 0.65  # set the auto-scaling configurations
   min_instances: 1
-  max_instances: 1
+  max_instances: 2
 
-entrypoint: python main.py # Your entry point, typically where your server is initialized.
+network: 
+  session_affinity: true  # for socketio session affinity
 
-# You can set environment variables here, if needed.
-env_variables:
-  SECRET_KEY: 'your-secret-key'
+entrypoint: gunicorn -b :$PORT main:app  # replace "your_app_name" with the name of your flask app
 
-# If you have static files like CSS, JS, or images:
-handlers:
-- url: /static
-  static_dir: static
-- url: /.*
-  script: main.app
+# specify any other configurations based on your app's needs
