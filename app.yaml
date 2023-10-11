@@ -1,9 +1,11 @@
-runtime: python39  # specify the python version
+runtime: python  # specify the python version
+env: flex
 instance_class: F2  # choose an instance class based on your needs
 automatic_scaling:
-  target_cpu_utilization: 0.65  # set the auto-scaling configurations
-  min_instances: 1
-  max_instances: 2
+  min_num_instances: 1
+  max_num_instances: 2
+runtime_config:
+    python_version: 3.7
 
 network: 
   session_affinity: true  # for socketio session affinity
