@@ -372,6 +372,8 @@ document.addEventListener("DOMContentLoaded", () => {
         yourPlayer = data;
     });
     socket.on('game_terminated', function(data) {
+        const currentTurnElement = document.getElementById('current-turn');
+        currentTurnElement.textContent = "Oyun sona erdi."
         alert(data);
     });
 
