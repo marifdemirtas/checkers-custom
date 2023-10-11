@@ -9,17 +9,27 @@ body {
 
 .info-panel {
     display: flex;
-    flex-direction: column; /* This makes the child elements stack vertically */
-    justify-content: center;
+    /* flex-direction: column; This makes the child elements stack vertically */
+    justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
     padding: 10px 50px; /* Adjust as needed for spacing */
-    background-color: #e6e6e6; /* Light gray background */
+    background-color: #bababa; /* Light gray background */
     border-radius: 10px;
+    width: 300px;
+
+    border: 1px solid #ddd;   /* Slight border to define the box */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
 }
 
-.player-info, .turn-info {
-    font-size: 1.5em;
+.player-info {
+    float: left;
+    font-size: 1em;
+    margin: 5px 0; /* Provides some spacing between the two messages */
+}
+.turn-info {
+    float: right;
+    font-size: 1em;
     margin: 5px 0; /* Provides some spacing between the two messages */
 }
 
@@ -39,17 +49,37 @@ body {
 
 /* Modal Content */
 .modal-content {
-    background-color: #fefefe;
+    background-color: #c1f5b4;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+    border-radius: 10px;
     margin: auto;
     padding: 20px;
     border: 1px solid #888;
-    width: 50%;
+    width: 20%;
     text-align: center;
+}
+
+#winMessage {
+    color: black;
+    border-radius: 10px;
+    font-size: 20px;
+    font-weight: bold;
+    font-family: sans-serif;
+}
+
+#resetFromModal {
+    color: black;
+    background-color: rgb(162, 209, 226);
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: normal;
 }
 
 /* The Close Button */
 .close {
-    color: #aaaaaa;
+    display: none;
+    color: #ededed;
+    border-radius: 10px;
     float: right;
     font-size: 28px;
     font-weight: bold;
@@ -65,39 +95,55 @@ body {
 
 .dark-square {
     background-color: #B57340; /* Darker square color */
+    background: linear-gradient(135deg, #e9d4b7, #d7c2a2);
 }
 
 .light-square {
     background-color: #F2D4B6; /* Lighter square color */
+    background: linear-gradient(135deg, #a6825e, #8a7150);
 }
 .square {
     width: 100%;
     height: 100%;
     /* background-color: #ffe6b3; Light color for the square similar to the image */
     border: 1px solid #a6a6a6; /* Add a border to each square to match the pattern in the image */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .square:hover {
-    background-color: rgba(120,120,120,0.01); /* Light color for the square similar to the image */
+    background: rgba(120,120,120,0.1);
 }
 
 .piece {
-    width: 80%;
-    height: 80%;
+    width: 75%;
+    height: 75%;
     margin: 10% auto;
     border-radius: 50%;
+    /* Shadow for the lifted effect */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    /* Smooth transition for any animations */
+    transition: all 0.1s ease;
+    z-index: 1;
+    position: relative;
+}
+.piece:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.25);
 }
 
 .white-piece {
     background-color: white;
+    outline: 2px solid #a6a6a6;
 }
 
 .black-piece {
     background-color: black;
+    outline: 2px solid #2d2d2d;
+
 }
 
 .highlight {
-    background-color: lightgreen;
+    background: lightgreen;
 }
 
 .ghost-piece {

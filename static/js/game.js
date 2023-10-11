@@ -87,9 +87,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const currentTurnElement = document.getElementById('player-color');
 
         if (data === 'black') {
-            currentTurnElement.textContent = "SİYAH";
+            currentTurnElement.textContent = "Siyah ⚫";
         } else if (data === 'white') {
-            currentTurnElement.textContent = "BEYAZ";
+            currentTurnElement.textContent = "Beyaz ⚪ ";
         } else {
             currentTurnElement.textContent = "İZLEYİCİ";
         }
@@ -98,12 +98,14 @@ document.addEventListener("DOMContentLoaded", () => {
         const currentTurnElement = document.getElementById('current-turn');
         checkWinCondition();
         
-        if (currentPlayer === 'black') {
-            currentTurnElement.textContent = "SİYAH";
-        } else {
-            currentTurnElement.textContent = "BEYAZ";
+        if (currentPlayer === yourPlayer) {
+            currentTurnElement.textContent = "Sıra senin. 🟢";
+        } else if (currentPlayer === 'white' && yourPlayer == 'black') {
+            currentTurnElement.textContent = "Sıra beyazda. ⏳";
+        } else if (currentPlayer === 'black' && yourPlayer == 'white') {
+            currentTurnElement.textContent = "Sıra siyahta. ⏳";
         }
-    }
+}
     
     // Function to determine if the movement is valid
 
@@ -286,73 +288,76 @@ document.addEventListener("DOMContentLoaded", () => {
     
     }
 
-
-    board.addEventListener('click', (e) => {
-        if (currentPlayer != yourPlayer){
-            return;
-        }
-
-        const target = e.target;
-        clearHighlights(); // Clear previous highlights
-    
-        // If player clicks on a piece
-        if (target.classList.contains('piece') && target.dataset.player === currentPlayer && !skipRequired) {
-            if (selectedPiece) {
-                selectedPiece.classList.remove('selected'); // Deselect previously selected piece
-            }
-            selectedPiece = target;
-            selectedPiece.classList.add('selected');
-            highlightValidMoves(selectedPiece.parentElement); // Highlight possible moves
-            syncServer();
-            return;
-        }
-    
-        if (target.dataset.position){
-            // Handle simple move
-            if (selectedPiece && isValidSimpleMove(selectedPiece.parentElement, target)) {
-                target.appendChild(selectedPiece);
-                selectedPiece.classList.remove('selected');
-                selectedPiece = null;
-                currentPlayer = (currentPlayer === 'white') ? 'black' : 'white'; // Switch player
-                playPlaceSound();
-                updateTurnDisplay(); // Call this function to update the turn display
-                syncServer();
+    socket.on('start_game', () => {
+        console.log("hey")
+        updateTurnDisplay();
+        board.addEventListener('click', (e) => {
+            if (currentPlayer != yourPlayer){
                 return;
             }
 
-            // Handle skips
-            if (selectedPiece && isValidSkip(selectedPiece.parentElement, target)) {
-                handleSkip(selectedPiece.parentElement, target);
-                if (canSkipFromSquare(target)) {
-                    selectedPiece = target.firstChild; // The dot becomes the new "selectedPiece"
-                } else {
+            const target = e.target;
+            clearHighlights(); // Clear previous highlights
+        
+            // If player clicks on a piece
+            if (target.classList.contains('piece') && target.dataset.player === currentPlayer && !skipRequired) {
+                if (selectedPiece) {
+                    selectedPiece.classList.remove('selected'); // Deselect previously selected piece
+                }
+                selectedPiece = target;
+                selectedPiece.classList.add('selected');
+                highlightValidMoves(selectedPiece.parentElement); // Highlight possible moves
+                syncServer();
+                return;
+            }
+        
+            if (target.dataset.position){
+                // Handle simple move
+                if (selectedPiece && isValidSimpleMove(selectedPiece.parentElement, target)) {
+                    target.appendChild(selectedPiece);
+                    selectedPiece.classList.remove('selected');
                     selectedPiece = null;
                     currentPlayer = (currentPlayer === 'white') ? 'black' : 'white'; // Switch player
+                    playPlaceSound();
                     updateTurnDisplay(); // Call this function to update the turn display
+                    syncServer();
+                    return;
                 }
+
+                // Handle skips
+                if (selectedPiece && isValidSkip(selectedPiece.parentElement, target)) {
+                    handleSkip(selectedPiece.parentElement, target);
+                    if (canSkipFromSquare(target)) {
+                        selectedPiece = target.firstChild; // The dot becomes the new "selectedPiece"
+                    } else {
+                        selectedPiece = null;
+                        currentPlayer = (currentPlayer === 'white') ? 'black' : 'white'; // Switch player
+                        updateTurnDisplay(); // Call this function to update the turn display
+                    }
+                    playPlaceSound();
+                    syncServer();
+                    return;
+                }
+            }
+        
+            // Handle case where player clicks on the dot (to confirm end of skips)
+            if (target === selectedPiece && target.classList.contains('dot')) {
+                // Convert dot to regular piece and remove ghost pieces
+                target.classList.remove('dot');
+                target.classList.add('piece');
+                target.classList.add((currentPlayer === 'white') ? 'white-piece' : 'black-piece');
+                target.dataset.player = currentPlayer;
+                document.querySelectorAll('.ghost-piece').forEach(ghost => ghost.remove());
+                currentPlayer = (currentPlayer === 'white') ? 'black' : 'white'; // Switch player
+                updateTurnDisplay(); // Call this function to update the turn display
+                selectedPiece = null;
                 playPlaceSound();
                 syncServer();
                 return;
             }
-        }
-    
-        // Handle case where player clicks on the dot (to confirm end of skips)
-        if (target === selectedPiece && target.classList.contains('dot')) {
-            // Convert dot to regular piece and remove ghost pieces
-            target.classList.remove('dot');
-            target.classList.add('piece');
-            target.classList.add((currentPlayer === 'white') ? 'white-piece' : 'black-piece');
-            target.dataset.player = currentPlayer;
-            document.querySelectorAll('.ghost-piece').forEach(ghost => ghost.remove());
-            currentPlayer = (currentPlayer === 'white') ? 'black' : 'white'; // Switch player
-            updateTurnDisplay(); // Call this function to update the turn display
-            selectedPiece = null;
-            playPlaceSound();
-            syncServer();
-            return;
-        }
-       
-    });
+        
+        });
+    }) 
     
     socket.on('update_board', function(data) {
         console.log(data);

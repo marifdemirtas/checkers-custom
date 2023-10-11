@@ -41,14 +41,16 @@ def handle_join_game(data):
         games[game_id] = {"white": None, "black": None, "gray": []}
         color_assigned = "white"
         games[game_id]["white"] = request.sid
+        emit('assign_color', color_assigned, room=request.sid)
     elif not games[game_id]["black"]:
         color_assigned = "black"
         games[game_id]["black"] = request.sid
+        emit('assign_color', color_assigned, room=request.sid)
+        emit('start_game', room=game_id)
     else:
         color_assigned = "gray"
         games[game_id]["gray"].append(request.sid)
-
-    emit('assign_color', color_assigned, room=request.sid)
+        emit('assign_color', color_assigned, room=request.sid)
 
 @socketio.on('disconnect')
 def handle_disconnect():
